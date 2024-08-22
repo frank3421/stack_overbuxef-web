@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Foro</title>
+	{% load static %}
+	<link rel="shortcut icon" type="image/png" href="{% static 'stack_overbuxef/images/stackoverbuxef_logo.png' %}"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+            tex2jax: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                processEscapes: true
+            }
+        });
+    </script>
+	<script type="text/javascript">
+        $(document).ready(function() {
+            $('.select2').select2();
+        });
+    </script>
+    <style>
+		.margins {
+            margin-left: 40px; /* Ajusta el valor según tus necesidades */
+            margin-right: 40px; /* Ajusta el valor según tus necesidades */
+        }
+		.pagination {
+			margin-bottom: 20px;
+		}
+		.select2-container {
+			max-width: 207px !important;
+            /* width: 100% !important; */
+        }
+		img {
+			max-width: 15%;
+		}
+		#user-page:hover > #user-svg {
+			transition: 0.4s;
+			fill: black;
+		}
+		.selected {
+            color: #dc3545; 
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <header>
+    <!-- Barra de navegación -->
+    <nav class="navbar shadow" style="background-color: #ed7d7d; margin-bottom:0.5cm;">
+        <div class="container-fluid">
+            <!-- Logo a la izquierda -->
+            <a class="navbar-brand" href="forum">
+                <img src="{% static 'stack_overbuxef/images/stackoverbuxef_logo.png' %}" alt="Bootstrap" width="30" height="30" class="d-inline-block align-text-top">
+                <span style="color: white; font-weight: bold;">Stack Overbuxef</span>
+            </a>
+
+            <!-- Espaciador central para empujar los otros elementos a los extremos -->
+            <div class="d-flex flex-grow-1"></div>
+            
+            <!-- Botón del icono del usuario a la derecha -->
+            <button class="btn btn-outline-light d-flex align-items-center me-2" type="button" onclick="window.location.href='profile'" id="user-page" style='margin-right:16px'>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#ffffff" class="bi bi-person-circle" viewBox="0 0 16 16" id="user-svg">
+                    <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
+                    <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"/>
+                </svg>
+                &nbsp;Usuario
+            </button>
+
+            <!-- Botón de cerrar sesión más a la derecha -->
+            <form class="form-inline">
+                <button class="btn btn-outline-light" type="button" onclick="window.location.href='logout'">Cerrar sesión</button>
+            </form>
+        </div>
+    </nav>
+
+    <header class="margins" style="margin-bottom:1cm;">
+        <div>
+            <h1>Foro</h1>
+        </div>
+
+        <div>
+            <form method="get" action="" class="form-inline">
+                <input type="text" class="form-control shadow" name="q" placeholder="Busque una pregunta" value="{{ query|default_if_none:'' }}">
+                <button type="submit" class="btn btn-danger shadow" style="min-width: 48px;"><i class="fa fa-search"></i></button>
+            </form>
+			<form method="get" action="" class="form-inline" style="margin-top: 10px;">
+				{% csrf_token %}
+				{{ form.as_p }}
+				<button type="submit" class="btn btn-danger shadow" style="min-width: 48px;"><i class="fa fa-search"></i></button>
+			</form>
+            <a href="{% url 'message' %}"><button class="btn btn-danger shadow mb-1">Publicar mensaje</button></a>
+            {% if request.user.tipo == 'AD' %}
+                <a href="{% url 'tags' %}"><button class="btn btn-danger shadow mb-1">Administrar Tags</button></a>
+            {% endif %}
+        </div>
+    </header>   
+
+    <div class="margins">
+        <hr>
+        {% for consulta in page_obj %}
+        <div>
+            <div>
+				{% if consulta.anonimo %}
+					<i class="fa fa-user-secret"></i>
+					<a>Anónimo</a>
+                {% else %}
+					{% if consulta.creador.tipo == "ES" %}
+					<i class="fa fa-user-circle center"></i>
+					{% elif consulta.creador.tipo == "PR" %}
+					<i class="fa fa-graduation-cap"></i>
+					{% else %}
+					<i class="fa fa-drivers-license"></i>
+					{% endif %}
+                    <a href="{% url 'other_profile' consulta.creador.id %}">{{ consulta.creador.username }}</a>
+                {% endif %}
+            </div>
+            <div>
+                <h4><a>{{ consulta.titulo }}</a></h4>
+                <p>{{ consulta.mensaje|safe }}</p>
+				{% if consulta.multimedia %}
+					<img src="media/fotos_consultas/{{ consulta.multimedia }}" alt="foto de consulta"><br><br>
+				{% endif %}
+            </div>
+            <div>
+                <p>
+                    <i class="fa fa-arrow-up btn btn-sm btn-outline-danger shadow like-button-consulta" data-id="{{ consulta.id }}" style="cursor: pointer;"></i>
+                    <span id="votar-{{ consulta.id }}">{% if consulta.votar > 0 %}+{% endif %}{{ consulta.votar }}</span>
+                    <i class="fa fa-arrow-down btn btn-sm btn-outline-danger shadow dislike-button-consulta" data-id="{{ consulta.id }}" style="cursor: pointer;"></i>
+                </p>
+            </div>
+			{% for tag, value in tags.items %}
+			{% if tag == consulta.id %}
+			<div class="d-flex flex-nowrap">
+			{% for elem in value %}
+					<span class="ml-1 badge badge-pill badge-danger">{{ elem }}</span>
+				{% endfor %}
+			</div>
+			{% endif %}
+			{% endfor %}
+            <div style="display: flex; justify-content: flex-end">
+                <small>Publicada el {{ consulta.fecha_creacion }}</small>
+            </div>
+            <div style="display: flex; justify-content: flex-end">
+                <button class="consult-link btn btn-danger shadow mb-2" data-id="{{ consulta.id }}" data-toggle="modal" data-target="#answerModal" style="margin-right: 10px;"><i class="fa fa-comments"></i> Respuestas</button>
+                <button class="answer-consult btn btn-danger shadow mb-2" data-id="{{ consulta.id }}" data-toggle="modal" data-target="#makeAnswerModal" style="margin-right: 10px;"><i class="fa fa-reply"></i> Responder</button>
+                {% if request.user.tipo == 'AD' %}
+                    <button class="delete-comment btn btn-danger shadow mb-2" data-id="{{ consulta.id }}"><i class="fa fa-trash"></i> Borrar</button>
+                {% endif %}
+            </div>
+        </div>
+        <hr>
+        {% endfor %}
+        <div class="pagination">
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                    <a href="?q={{ query }}&page=1">&laquo; primera</a>
+                    <a href="?q={{ query }}&page={{ page_obj.previous_page_number }}">anterior</a>
+                {% endif %}
+    
+                <span class="current">
+                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}.
+                </span>
+    
+                {% if page_obj.has_next %}
+                    <a href="?q={{ query }}&page={{ page_obj.next_page_number }}">siguiente</a>
+                    <a href="?q={{ query }}&page={{ page_obj.paginator.num_pages }}">última &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+    </div>
+    <!--modal-->
+    <div class="modal fade" id="answerModal" tabindex="-1" role="dialog" aria-labelledby="answerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="answerModalLabel">Respuestas</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="modal-body">
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal para responder -->
+    <div class="modal fade" id="makeAnswerModal" tabindex="-1" role="dialog" aria-labelledby="makeAnswerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="makeAnswerModalLabel">Escribe tu respuesta</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="modal-body1">
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    $(document).ready(function(){
+		// Mostrar like o dislike al cargar la página
+		$('.like-button-consulta').each(function() {
+			let consultId = $(this).data('id');
+			$.ajax({
+                url: '/votePost/' + consultId + '/',
+                success: function(data) {
+					let voto = data.voto;
+					if (voto == 1)
+						$('.like-button-consulta[data-id="' + consultId + '"]').toggleClass('bg-danger text-white');
+					else if (voto == 2)
+						$('.dislike-button-consulta[data-id="' + consultId + '"]').toggleClass('bg-danger text-white');
+                }
+            });
+		});
+
+        // Modal para respuestas
+        $('.consult-link').click(function(){
+            var consultId = $(this).data('id');
+            $.ajax({
+                url: '/consults/' + consultId + '/',
+                success: function(data) {
+                    $('#modal-body').html(data);
+                    $('#answerModal').modal('show'); // Mostrar el modal después de cargar los datos
+                    MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
+                }
+            });
+        });
+
+        // Modal para responder
+        $('.answer-consult').click(function(){
+            var consultId = $(this).data('id');
+            $.ajax({
+                url: '/makeAnswer/' + consultId + '/',
+                success: function(data) {
+                    $('#modal-body1').html(data);
+                    $('#makeAnswerModal').modal('show'); // Mostrar el modal después de cargar los datos
+                }
+            });
+        });
+
+        $('#makeAnswerModal').on('shown.bs.modal', function() {
+            $(document).off('focusin.modal');
+        });
+
+		$('.delete-comment').click(function() {
+			var consultId = $(this).data('id');
+			$.ajax({
+				url: '/deleteComment/' + consultId + '/',
+				success: function() {
+					location.reload(); // Recargar la página
+				}
+			});
+		});
+
+        // Dar like
+        $('.like-button-consulta').click(function(){
+            var consultId = $(this).data('id');
+            $.ajax({
+                url: '/like/' + consultId + '/',
+                success: function(data) {
+					let plus = (data.votar > 0) ? "+" : ""
+                    $('#votar-' + consultId).text(plus + data.votar);
+                    $('.like-button-consulta[data-id="' + consultId + '"]').toggleClass('selected bg-danger text-white');
+                    $('.dislike-button-consulta[data-id="' + consultId + '"]').removeClass('selected bg-danger text-white'); // Elimina el estado de dislike
+                }
+            });
+        });
+
+        // Dar dislike
+        $('.dislike-button-consulta').click(function(){
+            var consultId = $(this).data('id');
+            $.ajax({
+                url: '/dislike/' + consultId + '/',
+                success: function(data) {
+					let plus = (data.votar > 0) ? "+" : ""
+                    $('#votar-' + consultId).text(plus + data.votar);
+                    $('.dislike-button-consulta[data-id="' + consultId + '"]').toggleClass('selected bg-danger text-white');
+                    $('.like-button-consulta[data-id="' + consultId + '"]').removeClass('selected bg-danger text-white'); // Elimina el estado de like
+                }
+            });
+        });
+    });
+    </script>
+</body>
+</html>
+

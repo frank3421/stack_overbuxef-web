@@ -1,0 +1,16 @@
+[
+    {
+        "model": "stack_overbuxef.Rol",
+        "pk": 1,
+        "fields": {
+            "rol": "Estudiante"
+        }
+    },
+    {
+        "model": "stack_overbuxef.Rol",
+        "pk": 2,
+        "fields": {
+            "rol": "Estudiante"
+        }
+    }
+]

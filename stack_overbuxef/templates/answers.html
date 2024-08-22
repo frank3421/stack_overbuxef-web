@@ -1,0 +1,119 @@
+<div>
+    <div>
+		{% if consult.anonimo %}
+			<i class="fa fa-user-secret"></i>
+			<a>Anónimo</a>
+		{% else %}
+			{% if consult.creador.tipo == "ES" %}
+			<i class="fa fa-user-circle center"></i>
+			{% elif consult.creador.tipo == "PR" %}
+			<i class="fa fa-graduation-cap"></i>
+			{% else %}
+			<i class="fa fa-drivers-license"></i>
+			{% endif %}
+			<a href="{% url 'other_profile' consult.creador.id %}">{{ consult.creador.username }}</a>
+		{% endif %}
+    </div>
+    <h2>{{consult.titulo}}</h2>
+    <p>{{consult.mensaje|safe}}</p>
+	{% if consult.multimedia %}
+		<img src="media/fotos_consultas/{{ consult.multimedia }}" alt="foto de consulta"><br><br>
+	{% endif %}
+    <div>
+        {% for answer in page_obj %}
+        <div>
+			<hr style="border: 1px solid rgba(0, 0, 0, 0.1);">
+			{% if answer.anonimo %}
+				<i class="fa fa-user-secret"></i>
+				<a>Anónimo</a>
+			{% else %}
+				{% if answer.creador.tipo == "ES" %}
+				<i class="fa fa-user-circle center"></i>
+				{% elif answer.creador.tipo == "PR" %}
+				<i class="fa fa-graduation-cap"></i>
+				{% else %}
+				<i class="fa fa-drivers-license"></i>
+				{% endif %}
+				<a href="{% url 'other_profile' answer.creador.id %}">{{ answer.creador.username }}</a>
+			{% endif %}
+
+            <p>{{ answer.mensaje|safe}}</p>
+			{% if answer.multimedia %}
+				<img src="{{ answer.multimedia }}" alt="foto de respuesta"><br><br>
+			{% endif %}
+            <div>
+                <button class="btn btn-sm btn-outline-danger shadow like-button" data-id="{{ answer.id }}"><i class="fa fa-arrow-up"></i></button>
+                <span id="votar-{{ answer.id }}">{% if answer.votar > 0 %}+{% endif %}{{ answer.votar }}</span>
+                <button class="btn btn-sm btn-outline-danger shadow dislike-button" data-id="{{ answer.id }}"><i class="fa fa-arrow-down"></i></button>
+			</div>
+			<br>
+            <small>Publicada el {{answer.fecha_creacion}}</small><br>
+			{% if request.user.tipo == 'AD' %}
+			<button class="delete-reply btn btn-danger shadow mb-2" data-id="{{ answer.id }}"><i class="fa fa-trash"></i> Borrar</button>
+			{% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    <div>
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+        {% endif %}
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}">Next</a>
+        {% endif %}
+    </div>
+</div>
+<script>
+    $(document).ready(function() {
+		// Mostrar like o dislike al cargar la página
+		$('.like-button').each(function() {
+			let answerId = $(this).data('id');
+			$.ajax({
+                url: '/voteAnswer/' + answerId + '/',
+                success: function(data) {
+					let voto = data.voto;
+					if (voto == 1)
+						$('.like-button[data-id="' + answerId + '"]').toggleClass('bg-danger text-white');
+					else if (voto == 2)
+						$('.dislike-button[data-id="' + answerId + '"]').toggleClass('bg-danger text-white');
+                }
+            });
+		});
+
+        $('.like-button').click(function() {
+            var answerId = $(this).data('id');
+            $.ajax({
+                url: '/like1/' + answerId + '/',
+                success: function(data) {
+                    let plus = (data.votar > 0) ? "+" : ""
+                    $('#votar-' +answerId).text(plus + data.votar);
+                    $('.like-button[data-id="' + answerId + '"]').toggleClass('selected bg-danger text-white');
+                    $('.dislike-button[data-id="' + answerId + '"]').removeClass('selected bg-danger text-white'); // Elimina el estado de dislike
+                }
+            });
+        });
+        $('.dislike-button').click(function() {
+            var answerId = $(this).data('id');
+            $.ajax({
+                url: '/dislike1/' + answerId + '/',
+                success: function(data) {
+                    let plus = (data.votar > 0) ? "+" : ""
+                    $('#votar-' + answerId).text(plus + data.votar);
+                    $('.dislike-button[data-id="' + answerId + '"]').toggleClass('selected bg-danger text-white');
+                    $('.like-button[data-id="' + answerId + '"]').removeClass('selected bg-danger text-white');
+                }
+            });
+        });
+
+        $('.delete-reply').click(function() {
+            var replyId = $(this).data('id');
+            $.ajax({
+                url: '/deleteReply/' + replyId + '/',
+                success: function() {
+                    location.reload(); // Recargar la página
+                }
+            });
+        });
+    });
+</script>

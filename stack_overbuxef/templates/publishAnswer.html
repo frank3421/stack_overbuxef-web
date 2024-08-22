@@ -1,0 +1,18 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Respuesta</title>
+    <script type="text/javascript" src="{% static "ckeditor/ckeditor-init.js" %}"></script>
+    <script type="text/javascript" src="{% static "ckeditor/ckeditor/ckeditor.js" %}"></script> 
+</head>
+<body>
+    <h1>Respuesta</h1>
+
+    <form method="POST" action="{% url 'makeAnswer' consult_id=consult_id %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-danger shadow mb-1">Publicar</button>
+    </form>
+</body>
+</html>
